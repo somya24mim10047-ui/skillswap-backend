@@ -1,0 +1,38 @@
+# Core Django
+Django>=4.2
+djangorestframework>=3.14
+
+# Authentication (JWT)
+djangorestframework-simplejwt>=5.3
+
+# Database
+psycopg2-binary>=2.9
+
+# CORS handling (React ↔ Django)
+django-cors-headers>=4.3
+
+# Environment variables
+python-dotenv>=1.0
+
+# API requests testing / utilities
+requests>=2.31
+
+# AI / ML / NLP
+scikit-learn>=1.3
+numpy>=1.26
+pandas>=2.1
+scipy>=1.11
+
+# NLP (optional but recommended)
+spacy>=3.7
+
+# Text processing
+nltk>=3.8
+
+# Access Control & Filtering
+django-filter>=23.5
+
+# Deployment (optional)
+gunicorn>=21.2
+whitenoise>=6.6
+
