@@ -1,4 +1,3 @@
-from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 model = None
@@ -8,9 +7,10 @@ def get_model():
     global model
 
     if model is None:
-        print("Loading AI model...")
+        from sentence_transformers import SentenceTransformer
+
+        print("Loading model...")
         model = SentenceTransformer("all-MiniLM-L6-v2")
-        print("Model loaded")
 
     return model
 
