@@ -10,7 +10,7 @@ def get_model():
     if model is None:
         print("Loading AI model...")
         model = SentenceTransformer("all-MiniLM-L6-v2")
-        print("Model loaded!")
+        print("Model loaded")
 
     return model
 
