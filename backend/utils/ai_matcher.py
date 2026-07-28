@@ -9,8 +9,9 @@ def get_model():
     if model is None:
         from sentence_transformers import SentenceTransformer
 
-        print("Loading model...")
+        print("Loading AI model...")
         model = SentenceTransformer("all-MiniLM-L6-v2")
+        print("Model loaded!")
 
     return model
 
