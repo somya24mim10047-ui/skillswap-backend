@@ -24,7 +24,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ["id", "user", "bio", "skills"]
-
+        read_only_fields = ["id", "user", "skills"]
 
 # CONNECTION
 class ConnectionSerializer(serializers.ModelSerializer):
