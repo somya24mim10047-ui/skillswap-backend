@@ -1,33 +1,13 @@
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
-model = None
-
-
-def get_model():
-    global model
-
-    if model is None:
-        from sentence_transformers import SentenceTransformer
-
-        print("Loading AI model...")
-        model = SentenceTransformer("all-MiniLM-L6-v2")
-        print("Model loaded!")
-
-    return model
-
-
-def get_embedding(skill_text):
-    model = get_model()
-    return model.encode(skill_text)
 
 
 def calculate_similarity(skill1, skill2):
-    embedding1 = get_embedding(skill1)
-    embedding2 = get_embedding(skill2)
+    texts = [skill1, skill2]
 
-    similarity = cosine_similarity(
-        [embedding1],
-        [embedding2]
-    )
+    vectorizer = TfidfVectorizer()
+    vectors = vectorizer.fit_transform(texts)
+
+    similarity = cosine_similarity(vectors[0:1], vectors[1:2])
 
     return float(similarity[0][0])
