@@ -58,18 +58,35 @@ class RegisterView(APIView):
 
 # ---------------- LOGIN ----------------
 
-class LoginView(ObtainAuthToken):
+class LoginView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
+    def post(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
 
-        token = Token.objects.get(key=response.data["token"])
+        print("Username:", username)
+        print("Password:", password)
+
+        user = authenticate(
+            username=username,
+            password=password
+        )
+
+        print("Authenticated User:", user)
+
+        if user is None:
+            return Response(
+                {"error": "Invalid Username or Password"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        token, created = Token.objects.get_or_create(user=user)
 
         return Response({
             "token": token.key,
-            "user_id": token.user_id,
-            "username": token.user.username,
+            "user_id": user.id,
+            "username": user.username
         })
 
 
