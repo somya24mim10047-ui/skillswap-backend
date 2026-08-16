@@ -1,23 +1,77 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+
     bio = models.TextField(blank=True)
-    skills = models.ManyToManyField("Skill", blank=True) 
+
+    profile_picture = models.ImageField(
+        upload_to="profiles/",
+        blank=True,
+        null=True
+    )
+
+    location = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    education = models.CharField(
+        max_length=200,
+        blank=True
+    )
+
+    profession = models.CharField(
+        max_length=200,
+        blank=True
+    )
+
+    linkedin = models.URLField(blank=True)
+
+    github = models.URLField(blank=True)
+
+    EXPERIENCE_CHOICES = [
+        ("Beginner", "Beginner"),
+        ("Intermediate", "Intermediate"),
+        ("Expert", "Expert"),
+    ]
+
+    experience = models.CharField(
+        max_length=20,
+        choices=EXPERIENCE_CHOICES,
+        default="Beginner"
+    )
 
     def __str__(self):
         return self.user.username
 
 
 class Skill(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="skills")
+
+    SKILL_TYPES = [
+        ("HAVE", "Have"),
+        ("WANT", "Want"),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="skills"
+    )
+
     name = models.CharField(max_length=100)
+
     description = models.TextField(blank=True)
-    
+
+    skill_type = models.CharField(
+        max_length=10,
+        choices=SKILL_TYPES,
+        default="HAVE",
+    )
+
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.skill_type})"
     
 class Connection(models.Model):
     STATUS_CHOICES = [

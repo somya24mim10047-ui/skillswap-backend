@@ -14,18 +14,52 @@ class UserSerializer(serializers.ModelSerializer):
 class SkillSerializer(serializers.ModelSerializer):
     class Meta:
         model = Skill
-        fields = ["id", "name", "description"]
-
+        fields = [
+            "id",
+            "name",
+            "description",
+            "skill_type",
+        ]
 
 # PROFILE
 class ProfileSerializer(serializers.ModelSerializer):
-    skills = SkillSerializer(source="user.skills", many=True, read_only=True)
+
+    have_skills = serializers.SerializerMethodField()
+    want_skills = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields = ["id", "user", "bio", "skills"]
-        read_only_fields = ["id", "user", "skills"]
+        fields = [
+            "id",
+            "user",
+            "bio",
+            "location",
+            "education",
+            "profession",
+            "experience",
+            "linkedin",
+            "github",
+            "profile_picture",
+            "have_skills",
+            "want_skills",
+        ]
 
+    def get_have_skills(self, obj):
+        skills = Skill.objects.filter(
+            user=obj.user,
+            skill_type="HAVE"
+        )
+
+        return SkillSerializer(skills, many=True).data
+
+    def get_want_skills(self, obj):
+        skills = Skill.objects.filter(
+            user=obj.user,
+            skill_type="WANT"
+        )
+
+        return SkillSerializer(skills, many=True).data
+    
 # CONNECTION
 class ConnectionSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()

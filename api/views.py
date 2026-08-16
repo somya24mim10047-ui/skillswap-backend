@@ -116,13 +116,17 @@ class SkillCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         skill_name = serializer.validated_data["name"]
+        skill_type = serializer.validated_data["skill_type"]
 
         if Skill.objects.filter(
             user=self.request.user,
             name__iexact=skill_name,
+            skill_type=skill_type,
         ).exists():
             raise ValidationError(
-                {"error": "Skill already exists."}
+                {
+                    "error": f"This skill already exists in your {skill_type.lower()} list."
+                }
             )
 
         serializer.save(user=self.request.user)
@@ -138,11 +142,14 @@ class SkillMatchView(APIView):
 
         current_user = request.user
 
-        current_skills = Skill.objects.filter(user=current_user)
+        my_have = Skill.objects.filter(
+            user=current_user,
+            skill_type="HAVE"
+        )
 
-        current_skill_text = " ".join(
-            f"{skill.name} {skill.description or ''}"
-            for skill in current_skills
+        my_want = Skill.objects.filter(
+            user=current_user,
+            skill_type="WANT"
         )
 
         matches = []
@@ -151,40 +158,101 @@ class SkillMatchView(APIView):
 
         for user in users:
 
-            user_skills = Skill.objects.filter(user=user)
-
-            skill_text = " ".join(
-                f"{skill.name} {skill.description or ''}"
-                for skill in user_skills
+            their_have = Skill.objects.filter(
+                user=user,
+                skill_type="HAVE"
             )
 
-            if not skill_text:
-                continue
-
-            score = calculate_similarity(
-                current_skill_text,
-                skill_text
+            their_want = Skill.objects.filter(
+                user=user,
+                skill_type="WANT"
             )
 
-            matches.append({
-                "username": user.username,
-                "similarity": round(score * 100, 2),
-                "skills": [
-                    {
+            # Skills they have that I require
+            matching_have = []
+
+            for skill in their_have:
+                if my_want.filter(name__iexact=skill.name).exists():
+                    matching_have.append({
+                        "id": skill.id,
                         "name": skill.name,
                         "description": skill.description,
-                    }
-                    for skill in user_skills
-                ],
-            })
+                    })
+
+            # Skills they require that I have
+            matching_required = []
+
+            for skill in their_want:
+                if my_have.filter(name__iexact=skill.name).exists():
+                    matching_required.append({
+                        "id": skill.id,
+                        "name": skill.name,
+                        "description": skill.description,
+                    })
+
+            # Skip users with no exchange opportunity
+            if not matching_have and not matching_required:
+                continue
+
+            # AI Similarity
+            my_text = " ".join(
+                skill.name + " " + (skill.description or "")
+                for skill in my_have
+            )
+
+            their_text = " ".join(
+                skill.name + " " + (skill.description or "")
+                for skill in their_have
+            )
+
+            similarity = calculate_similarity(
+                my_text,
+                their_text
+            )
+
+            # Final Score
+            exchange_score = (
+                len(matching_have) * 50 +
+                len(matching_required) * 50
+            )
+
+            final_score = round(
+                (similarity * 100 + exchange_score) / 2,
+                2
+            )
+
+        matches.append({
+
+    "username": user.username,
+
+    "similarity": final_score,
+
+    "have_skills": matching_have,
+
+    "required_skills": matching_required,
+
+    "bio": user.profile.bio,
+
+    "location": user.profile.location,
+
+    "education": user.profile.education,
+
+    "profession": user.profile.profession,
+
+    "experience": user.profile.experience,
+
+    "linkedin": user.profile.linkedin,
+
+    "github": user.profile.github,
+
+})
 
         matches.sort(
             key=lambda x: x["similarity"],
-            reverse=True,
+            reverse=True
         )
 
         return Response(matches)
-
 
 # ---------------- SEND CONNECTION ----------------
 
