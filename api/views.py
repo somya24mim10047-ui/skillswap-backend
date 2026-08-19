@@ -18,7 +18,30 @@ from .serializers import (
     ConnectionSerializer,
     MessageSerializer,
 )
+class SkillCreateView(generics.ListCreateAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = SkillSerializer
 
+    def get_queryset(self):
+        return Skill.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        skill_name = serializer.validated_data["name"]
+        skill_type = serializer.validated_data["skill_type"]
+
+        if Skill.objects.filter(
+            user=self.request.user,
+            name__iexact=skill_name,
+            skill_type=skill_type,
+        ).exists():
+            raise ValidationError(
+                {
+                    "error": f"This skill already exists in your {skill_type.lower()} list."
+                }
+            )
+
+        serializer.save(user=self.request.user)
 
 # ---------------- REGISTER ----------------
 
@@ -92,6 +115,16 @@ class LoginView(APIView):
 
 # ---------------- PROFILE ----------------
 
+from rest_framework import generics
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+
+from .models import Profile
+from .serializers import ProfileSerializer
+
+
 class ProfileView(generics.RetrieveUpdateAPIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -103,33 +136,22 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         )
         return profile
 
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            profile = self.get_object()
+            serializer = self.get_serializer(profile)
 
-# ---------------- SKILLS ----------------
+            return Response(serializer.data)
 
-class SkillCreateView(generics.ListCreateAPIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-    serializer_class = SkillSerializer
-
-    def get_queryset(self):
-        return Skill.objects.filter(user=self.request.user)
-
-    def perform_create(self, serializer):
-        skill_name = serializer.validated_data["name"]
-        skill_type = serializer.validated_data["skill_type"]
-
-        if Skill.objects.filter(
-            user=self.request.user,
-            name__iexact=skill_name,
-            skill_type=skill_type,
-        ).exists():
-            raise ValidationError(
+        except Exception as e:
+            print("PROFILE ERROR:", repr(e))
+            return Response(
                 {
-                    "error": f"This skill already exists in your {skill_type.lower()} list."
-                }
+                    "error": "Profile error",
+                    "details": str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-        serializer.save(user=self.request.user)
 
 
 # ---------------- AI MATCHING ----------------
